@@ -2,13 +2,16 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Colors } from '../constants/Colors'
 import { Link } from 'expo-router'
 import ThemedView from '../components/ThemedView'
+import { useNavigation } from '@react-navigation/native';
+
+
 
 const LogIn = () => {
+  const navigation = useNavigation();
+
   const loginSubmit = () => {
+    navigation.navigate('(dashboard)')
     console.log('Login button pressed');
-  }
-  const aboutSubmit = () => {
-    console.log('About button pressed');
   }
   return (
     <ThemedView style={styles.container}>
