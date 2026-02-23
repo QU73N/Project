@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Colors } from '../constants/Colors'
 import { Link } from 'expo-router'
 import ThemedView from '../components/ThemedView'
@@ -18,6 +18,10 @@ const LogIn = () => {
 
       <View style={styles.SubContainer}>
           <Text style={styles.SubText}>Log In</Text>
+
+          <Pressable style={styles.loginButton}>
+            <Text style={styles.loginButtonText}>Log In</Text>
+          </Pressable>
 
           <Link href="/about" style={styles.aboutText}>About OptiSched</Link>
       </View>
@@ -75,12 +79,12 @@ const styles = StyleSheet.create({
   SubContainer: {
     backgroundColor: Colors.white,
     width: '80%',
-    height: '50%',
-    borderRadius: 20,
+    height: '55%',
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',
-    bottom: '18%',
+    bottom: '15%',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.6)',
   },
   SubText: {
@@ -117,6 +121,28 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: Colors.white,
+  },
+  loginButton: {
+    position: 'absolute',
+    bottom: '15%',
+    backgroundColor: Colors.blue,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  loginButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 })
 
