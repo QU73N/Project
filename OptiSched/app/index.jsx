@@ -4,6 +4,12 @@ import { Link } from 'expo-router'
 import ThemedView from '../components/ThemedView'
 
 const LogIn = () => {
+  const loginSubmit = () => {
+    console.log('Login button pressed');
+  }
+  const aboutSubmit = () => {
+    console.log('About button pressed');
+  }
   return (
     <ThemedView style={styles.container}>
       <View style={styles.HeadContainer}>
@@ -19,11 +25,13 @@ const LogIn = () => {
       <View style={styles.SubContainer}>
           <Text style={styles.SubText}>Log In</Text>
 
-          <Pressable style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>Log In</Text>
+          <Pressable onPress={loginSubmit}
+          style={({pressed}) => [styles.loginButton, pressed && styles.pressedLoginButton]}>
+            <Text style={styles.loginButtonText}>Continue</Text>
           </Pressable>
 
-          <Link href="/about" style={styles.aboutText}>About OptiSched</Link>
+          <Link onPress={aboutSubmit} 
+          href="/about" style={styles.aboutText}>About OptiSched</Link>
       </View>
 
       <View style={styles.footer}>
@@ -143,6 +151,12 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  pressedLoginButton: {
+    backgroundColor: Colors.darkBlue,
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 7,
   },
 })
 
