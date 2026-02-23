@@ -30,12 +30,12 @@ const LogIn = () => {
             <Text style={styles.loginButtonText}>Continue</Text>
           </Pressable>
 
-          <Link onPress={aboutSubmit} 
+          <Link 
           href="/about" style={styles.aboutText}>About OptiSched</Link>
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2025 OptiSched. All rights reserved.</Text>
+        <Text style={styles.footerText}> 2025 OptiSched. All rights reserved.</Text>
       </View>
     </ThemedView>
   )
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   loginButton: {
     position: 'absolute',
     bottom: '15%',
-    backgroundColor: Colors.blue,
+    backgroundColor: Colors.lightBlue,
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 25,
