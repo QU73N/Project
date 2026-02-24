@@ -1,12 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { Link } from 'expo-router'
 import React from 'react'
+import { Colors } from '../../constants/Colors'
 import { goBack } from 'expo-router/build/global-state/routing'
 
 const mainDashboard = () => {
   return (
     <View style={styles.container}>
-        <Link href="/" style={styles.goBack}>Back to Login</Link>
+        <View style={styles.goBackContainer}>
+        </View>
     </View>
   )
 }
@@ -19,13 +21,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  goBack: {
-    backgroundColor: 'blue',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    fontSize: 18,
-    color: 'white',
-    fontWeight: 'bold',
-  },
+  goBackContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: '10%',
+    backgroundColor: Colors.lightBlue,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    },
 })
