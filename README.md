@@ -5,6 +5,7 @@ By combining an extensive constraint engine with intuitive administrative tools 
 
 # OptiSched Overview
 OptiSched combines a constraint-aware scheduling engine, an administrative visual editor, and student/manager schedule viewers augmented with conversational AI helpers. Core capabilities include:
+
 ●	Automated Schedule Generation: Enforces hard constraints (no teacher/room/section overlaps; capacity rules; subject–room compatibility) and optimizes soft objectives (teacher preferences, compact timetables, reduced idle gaps).
 
 ●	Comprehensive Data Modeling: Teachers, sections, subjects, rooms, curricula, blackout dates, and per-term rules are modeled to reflect real institutional policies.
