@@ -1,19 +1,27 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native'
 import { Colors } from '../constants/Colors'
 import { Link } from 'expo-router'
 import ThemedView from '../components/ThemedView'
-import { useNavigation } from '@react-navigation/native';
-
+import { useNavigation } from '@react-navigation/native'
+import { useState } from 'react'
 
 
 const LogIn = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation()
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const loginSubmit = () => {
-    navigation.navigate('(dashboard)')
-    console.log('Login button pressed');
+    if(!email && !password) {
+      console.log("Enter your credentials")
+    }
+    else {
+      navigation.navigate('(dashboard)')
+    }
   }
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <ThemedView style={styles.container}>
       <View style={styles.HeadContainer}>
         <Text 
@@ -28,6 +36,22 @@ const LogIn = () => {
       <View style={styles.SubContainer}>
           <Text style={styles.SubText}>Log In</Text>
 
+          <View style={styles.emailContainer}>
+            <TextInput placeholder='Email' 
+            style={styles.emailInput} 
+            keyboardType='email-address'
+            onChangeText={setEmail}
+            value={email}/>
+          </View>
+
+          <View style={styles.passContainer}>
+            <TextInput placeholder='Password' 
+            style={styles.passInput}
+            secureTextEntry
+            onChangeText={setPassword}
+            value={password}/>
+          </View>
+
           <Pressable onPress={loginSubmit}
           style={({pressed}) => [styles.loginButton, pressed && styles.pressedLoginButton]}>
             <Text style={styles.loginButtonText}>Continue</Text>
@@ -41,6 +65,7 @@ const LogIn = () => {
         <Text style={styles.footerText}> 2025 OptiSched. All rights reserved.</Text>
       </View>
     </ThemedView>
+    </TouchableWithoutFeedback>
   )
 }
 
@@ -157,10 +182,33 @@ const styles = StyleSheet.create({
   },
   pressedLoginButton: {
     backgroundColor: Colors.darkBlue,
+    shadowColor: 'black',
     shadowOpacity: 0.35,
     shadowRadius: 5,
     elevation: 7,
   },
+ emailContainer: {
+      backgroundColor: Colors.lightBlue,
+        padding: 10,
+        width: '60%',
+        position: 'absolute',
+        top: '25%',
+        outlineColor: 'black',
+        outlineWidth: 2,
+        borderRadius: 10,
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.6)',
+  },
+  passContainer: {
+      backgroundColor: Colors.lightBlue,
+        padding: 10,
+        width: '60%',
+        position: 'absolute',
+        top: '50%',
+        outlineColor: 'black',
+        outlineWidth: 2,
+        borderRadius: 10,
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.6)',
+  }
 })
 
 export default LogIn
