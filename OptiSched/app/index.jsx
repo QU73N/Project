@@ -1,4 +1,4 @@
-import { ScrollView, Pressable, StyleSheet, Text, TextInput, View, Animated, Dimensions, Platform, KeyboardAvoidingView, ActivityIndicator } from 'react-native'
+import { ScrollView, Pressable, StyleSheet, Text, TextInput, View, Animated, Dimensions, Platform, KeyboardAvoidingView, ActivityIndicator, Alert } from 'react-native'
 import { Colors } from '../constants/Colors'
 import { Link } from 'expo-router'
 import ThemedView from '../components/ThemedView'
@@ -8,6 +8,7 @@ import { useUser } from '../hooks/useUser'
 import { ThemeContext } from '../contexts/ThemeContext'
 import { useSignIn, useOAuth } from '@clerk/clerk-expo'
 import { useRouter } from 'expo-router'
+import { useUserContext } from '../contexts/UserContext'
 
 const { width, height } = Dimensions.get('window')
 
@@ -27,6 +28,7 @@ const LogIn = () => {
 
   const { isLoaded, signIn, setActive } = useSignIn()
   const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' })
+  const { login: contextLogin, useFallback, enableFallback } = useUserContext()
 
   const { user } = useUser()
 
@@ -51,26 +53,44 @@ const LogIn = () => {
       return
     }
 
-    if (!isLoaded) return
-
     setIsLoading(true)
     setLoginError('')
 
     try {
-      const result = await signIn.create({
-        identifier: username,
-        password,
-      })
+      // First try Clerk authentication
+      if (isLoaded && !useFallback) {
+        try {
+          const result = await signIn.create({
+            identifier: username,
+            password,
+          })
 
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId })
+          if (result.status === 'complete') {
+            await setActive({ session: result.createdSessionId })
+            router.replace('/(dashboard)')
+            return
+          }
+        } catch (clerkError) {
+          console.log('Clerk login failed, trying fallback...')
+        }
+      }
+
+      // Fallback to mock authentication
+      const result = await contextLogin(username, password)
+      
+      if (result.success) {
         router.replace('/(dashboard)')
       } else {
-        setLoginError('Login failed. Please check your credentials.')
+        setLoginError(result.message || 'Login failed. Please check your credentials.')
+        
+        // If it's the mock account, show a hint
+        if (username === 'testaccount123' && password === '123123') {
+          setLoginError('Try enabling fallback mode or check your credentials.')
+        }
       }
     } catch (err) {
       console.error('Login error:', err)
-      setLoginError(err.errors?.[0]?.message || 'Login failed. Please try again.')
+      setLoginError('Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -86,6 +106,12 @@ const LogIn = () => {
       console.error('Google sign in error:', err)
       setLoginError('Google sign in failed')
     }
+  }
+
+  const handleMockLogin = () => {
+    setUsername('testaccount123')
+    setPassword('123123')
+    enableFallback()
   }
 
   const handleFocus = (field) => {
@@ -251,6 +277,19 @@ const LogIn = () => {
               ]}
             >
               <Text style={styles.googleButtonText}>Continue with Google</Text>
+            </Pressable>
+
+            {/* Mock Login Button (for testing) */}
+            <Pressable 
+              onPress={handleMockLogin}
+              disabled={isLoading}
+              style={({pressed}) => [
+                styles.mockButton,
+                pressed && styles.mockButtonPressed,
+                isLoading && styles.mockButtonDisabled
+              ]}
+            >
+              <Text style={styles.mockButtonText}>Use Mock Account (testaccount123/123123)</Text>
             </Pressable>
           </Animated.View>
 
@@ -459,6 +498,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  mockButton: {
+    backgroundColor: '#6b7280',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#6b7280',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  mockButtonPressed: {
+    backgroundColor: '#4b5563',
+    transform: [{ scale: 0.98 }],
+  },
+  mockButtonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  mockButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
   footer: {
     position: 'absolute',

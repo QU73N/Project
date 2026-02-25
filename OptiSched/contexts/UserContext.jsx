@@ -1,19 +1,27 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import { ClerkProvider, useUser, useAuth } from "@clerk/clerk-expo";
 import { authService } from "../services/authService";
+import { MockAuthProvider, useMockAuth } from "./MockAuthContext";
 
 export const UserContext = createContext()
 
 export function UserProvider({ children }) {
     const { isSignedIn, user, isLoaded } = useUser();
     const { getToken } = useAuth();
+    const { mockUser, isMockAuthenticated, useMockAuth, mockLogin, mockLogout, mockUpdateProfile } = useMockAuth();
     
     const [isLoading, setIsLoading] = useState(true);
     const [localUser, setLocalUser] = useState(null);
+    const [useFallback, setUseFallback] = useState(false);
 
-    // Sync Clerk user with local context
+    // Determine which user to use (Clerk or Mock)
     useEffect(() => {
-        if (isLoaded && user) {
+        if (useMockAuth && mockUser) {
+            // Use mock user
+            setLocalUser(mockUser);
+            setIsLoading(false);
+        } else if (isLoaded && user) {
+            // Use Clerk user
             setLocalUser({
                 id: user.id,
                 name: `${user.firstName} ${user.lastName}`,
@@ -33,24 +41,33 @@ export function UserProvider({ children }) {
                 }
             });
             setIsLoading(false);
-        } else if (isLoaded && !user) {
+        } else if (isLoaded && !user && !useMockAuth) {
             setLocalUser(null);
             setIsLoading(false);
         }
-    }, [isLoaded, user]);
+    }, [isLoaded, user, useMockAuth, mockUser]);
 
     const updateUserProfile = async (profileData) => {
         try {
-            // TODO: Update user profile via Clerk API
-            console.log('Updating profile:', profileData);
-            
-            // Update local state
-            setLocalUser(prev => ({
-                ...prev,
-                ...profileData
-            }));
-            
-            return { success: true, message: 'Profile updated successfully' };
+            if (useMockAuth) {
+                // Update mock user
+                const result = await mockUpdateProfile(profileData);
+                if (result.success) {
+                    setLocalUser(prev => ({ ...prev, ...profileData }));
+                }
+                return result;
+            } else {
+                // TODO: Update user profile via Clerk API
+                console.log('Updating profile:', profileData);
+                
+                // Update local state
+                setLocalUser(prev => ({
+                    ...prev,
+                    ...profileData
+                }));
+                
+                return { success: true, message: 'Profile updated successfully' };
+            }
         } catch (error) {
             console.error('Profile update error:', error);
             return { success: false, message: 'Failed to update profile' };
@@ -58,15 +75,41 @@ export function UserProvider({ children }) {
     };
 
     const login = async (email, password) => {
-        // Clerk handles login through their components
-        // This is just a placeholder for compatibility
-        return { success: false, message: 'Use Clerk SignIn component instead' };
+        try {
+            // First try Clerk login
+            if (!useFallback) {
+                // Try Clerk authentication
+                return { success: false, message: 'Use Clerk SignIn component instead' };
+            } else {
+                // Fallback to mock authentication
+                const result = await mockLogin(email, password);
+                if (result.success) {
+                    setUseFallback(true);
+                }
+                return result;
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            
+            // If Clerk fails, try mock authentication
+            const result = await mockLogin(email, password);
+            if (result.success) {
+                setUseFallback(true);
+            }
+            return result;
+        }
     };
 
     const logout = async () => {
         try {
-            // Clerk handles sign out
-            await Clerk.signOut();
+            if (useMockAuth) {
+                // Mock logout
+                await mockLogout();
+                setUseFallback(false);
+            } else {
+                // Clerk logout
+                await Clerk.signOut();
+            }
             setLocalUser(null);
             return { success: true, message: 'Logged out successfully' };
         } catch (error) {
@@ -75,11 +118,15 @@ export function UserProvider({ children }) {
         }
     };
 
+    const enableFallback = () => {
+        setUseFallback(true);
+    };
+
     return (
         <ClerkProvider>
             <UserContext.Provider value={{
                 user: localUser,
-                isAuthenticated: isSignedIn,
+                isAuthenticated: useMockAuth ? isMockAuthenticated : isSignedIn,
                 isLoading,
                 updateUserProfile,
                 login,
@@ -87,7 +134,11 @@ export function UserProvider({ children }) {
                 authService, // Keep for backward compatibility
                 clerkUser: user,
                 isSignedIn,
-                getToken
+                getToken,
+                useFallback,
+                enableFallback,
+                mockUser,
+                isMockAuthenticated
             }}>
                 {children}
             </UserContext.Provider>
