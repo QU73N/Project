@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'react-native';
 import { UserProvider } from '../contexts/UserContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
-import { ClerkProvider } from '@clerk/clerk-expo';
+// import { ClerkProvider } from '@clerk/clerk-expo';
 import { MockAuthProvider } from '../contexts/MockAuthContext';
 
 const RootLayout = () => {
@@ -13,18 +13,16 @@ const RootLayout = () => {
     const theme = Colors[colorScheme] ?? Colors.light
   return (
     <MockAuthProvider>
-      <ClerkProvider>
-        <UserProvider>
-          <ThemeProvider>
-            <StatusBar barStyle={theme.statusBar} />
-            <Stack>
+      <UserProvider>
+        <ThemeProvider>
+          <StatusBar barStyle={theme.statusBar} />
+          <Stack>
                   <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }} />
                   <Stack.Screen name="about" options={{ headerShown: false, animation: 'fade' }} />
                   <Stack.Screen name="(dashboard)" options={{ headerShown: false, animation: 'fade' }} />
             </Stack>
           </ThemeProvider>
         </UserProvider>
-      </ClerkProvider>
     </MockAuthProvider>
   )
 }

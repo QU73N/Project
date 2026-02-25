@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useState, useRef, useEffect, useContext } from 'react'
 import { useUser } from '../hooks/useUser'
 import { ThemeContext } from '../contexts/ThemeContext'
-import { useSignIn, useOAuth } from '@clerk/clerk-expo'
+// import { useSignIn, useOAuth } from '@clerk/clerk-expo'
 import { useRouter } from 'expo-router'
 import { useUserContext } from '../contexts/UserContext'
 
@@ -26,8 +26,6 @@ const LogIn = () => {
   const passwordRef = useRef(null)
   const usernameRef = useRef(null)
 
-  const { isLoaded, signIn, setActive } = useSignIn()
-  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' })
   const { login: contextLogin, useFallback, enableFallback } = useUserContext()
 
   const { user } = useUser()
@@ -57,36 +55,13 @@ const LogIn = () => {
     setLoginError('')
 
     try {
-      // First try Clerk authentication
-      if (isLoaded && !useFallback) {
-        try {
-          const result = await signIn.create({
-            identifier: username,
-            password,
-          })
-
-          if (result.status === 'complete') {
-            await setActive({ session: result.createdSessionId })
-            router.replace('/(dashboard)')
-            return
-          }
-        } catch (clerkError) {
-          console.log('Clerk login failed, trying fallback...')
-        }
-      }
-
-      // Fallback to mock authentication
+      // Use mock authentication
       const result = await contextLogin(username, password)
       
       if (result.success) {
         router.replace('/(dashboard)')
       } else {
         setLoginError(result.message || 'Login failed. Please check your credentials.')
-        
-        // If it's the mock account, show a hint
-        if (username === 'testaccount123' && password === '123123') {
-          setLoginError('Try enabling fallback mode or check your credentials.')
-        }
       }
     } catch (err) {
       console.error('Login error:', err)
@@ -97,15 +72,7 @@ const LogIn = () => {
   }
 
   const handleGoogleSignIn = async () => {
-    try {
-      const result = await startOAuthFlow()
-      if (result.status === 'complete') {
-        router.replace('/(dashboard)')
-      }
-    } catch (err) {
-      console.error('Google sign in error:', err)
-      setLoginError('Google sign in failed')
-    }
+    setLoginError('Google Sign-In temporarily disabled. Use mock account instead.')
   }
 
   const handleMockLogin = () => {
@@ -260,7 +227,7 @@ const LogIn = () => {
               ]}
             >
               {isLoading ? (
-                <ActivityIndicator color="#ffffff" size="small" />
+                <ActivityIndicator size="small" color="#ffffff" />
               ) : (
                 <Text style={styles.loginButtonText}>Sign In</Text>
               )}
