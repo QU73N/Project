@@ -1,5 +1,6 @@
 import express from 'express';
 import { ENV } from '../config/env.js';
+import { generateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -14,7 +15,6 @@ router.get('/env', (req, res) => {
 });
 
 router.get('/test-token', (req, res) => {
-  const { generateToken } = require('../middleware/auth.js');
   const testToken = generateToken(1, 'faculty');
   res.json({
     tokenGenerated: 'SUCCESS',
