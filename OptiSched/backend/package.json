@@ -12,14 +12,15 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.2",
-    "cors": "^2.8.6",
-    "cron": "^4.4.0",
-    "dotenv": "^17.3.1",
-    "drizzle-orm": "^0.45.1",
-    "express": "^5.2.1"
+    "@neondatabase/serverless": "^1.0.0",
+    "cors": "^2.8.5",
+    "cron": "4.3",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.44.2",
+    "express": "^5.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "3.1.14",
+    "drizzle-kit": "^0.31.1"
   }
 }
