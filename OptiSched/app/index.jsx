@@ -1,214 +1,423 @@
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native'
+import { ScrollView, Pressable, StyleSheet, Text, TextInput, View, Animated, Dimensions, Platform, KeyboardAvoidingView, ActivityIndicator } from 'react-native'
 import { Colors } from '../constants/Colors'
 import { Link } from 'expo-router'
 import ThemedView from '../components/ThemedView'
 import { useNavigation } from '@react-navigation/native'
-import { useState } from 'react'
+import { useState, useRef, useEffect, useContext } from 'react'
+import { useUser } from '../hooks/useUser'
+import { ThemeContext } from '../contexts/ThemeContext'
+import authService from '../services/authService'
 
+const { width, height } = Dimensions.get('window')
 
 const LogIn = () => {
   const navigation = useNavigation()
-
-  const [email, setEmail] = useState('')
+  const { colors } = useContext(ThemeContext)
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [isFocused, setIsFocused] = useState({ username: false, password: false })
+  const [isLoading, setIsLoading] = useState(false)
+  const [loginError, setLoginError] = useState('')
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(50)).current
+  const passwordRef = useRef(null)
+  const usernameRef = useRef(null)
 
-  const loginSubmit = () => {
-    if(!email && !password) {
-      console.log("Enter your credentials")
+  const { user } = useUser()
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      })
+    ]).start()
+  }, [])
+
+  const loginSubmit = async () => {
+    if (!username || !password) {
+      setLoginError('Please fill in all fields')
+      return
     }
-    else {
-      navigation.navigate('(dashboard)')
+
+    setIsLoading(true)
+    setLoginError('')
+
+    try {
+      const result = await authService.login(username, password)
+      
+      if (result.success) {
+        console.log('Login successful:', result.user)
+        // Navigate based on user role
+        const dashboardRoute = authService.getDashboardRoute()
+        navigation.navigate(dashboardRoute.split('/')[1]) // Remove the leading '/'
+      } else {
+        setLoginError(result.message || 'Login failed')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      setLoginError('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
+
+  const handleFocus = (field) => {
+    setIsFocused(prev => ({ ...prev, [field]: true }))
+  }
+
+  const handleBlur = (field) => {
+    setIsFocused(prev => ({ ...prev, [field]: false }))
+  }
+
+  const handleUsernameSubmit = () => {
+    passwordRef.current?.focus()
+  }
+
+  const handlePasswordSubmit = () => {
+    passwordRef.current?.blur()
+    loginSubmit()
+  }
+
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-    <ThemedView style={styles.container}>
-      <View style={styles.HeadContainer}>
-        <Text 
-          style={styles.HeadText}
-          accessibilityLabel="OptiSched application header"
-          accessibilityRole="header"
-        >
-          Opti<Text style={styles.HeadTextHighlight}>Sched</Text>
-        </Text>
-      </View>
-
-      <View style={styles.SubContainer}>
-          <Text style={styles.SubText}>Log In</Text>
-
-          <View style={styles.emailContainer}>
-            <TextInput placeholder='Email' 
-            style={styles.emailInput} 
-            keyboardType='email-address'
-            onChangeText={setEmail}
-            value={email}/>
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+      >
+        <View style={styles.innerContainer}>
+          {/* Animated Background Gradient */}
+          <View style={styles.backgroundGradient}>
+            <View style={[styles.gradientCircle, { top: -100, right: -50 }]} />
+            <View style={[styles.gradientCircle, { bottom: -150, left: -75 }]} />
           </View>
 
-          <View style={styles.passContainer}>
-            <TextInput placeholder='Password' 
-            style={styles.passInput}
-            secureTextEntry
-            onChangeText={setPassword}
-            value={password}/>
+          {/* Header */}
+          <Animated.View 
+            style={[
+              styles.headerContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
+            <Text style={[styles.brandText, { color: colors.text }]}>
+              Opti<Text style={[styles.brandHighlight, { color: colors.primary }]}>Sched</Text>
+            </Text>
+            <Text style={[styles.tagline, { color: colors.textSecondary }]}>Smart Scheduling Made Simple</Text>
+          </Animated.View>
+
+          {/* Login Form */}
+          <Animated.View 
+            style={[
+              styles.formContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+                backgroundColor: colors.card
+              }
+            ]}
+          >
+            <View style={styles.formHeader}>
+              <Text style={[styles.formTitle, { color: colors.text }]}>OptiSched Portal</Text>
+              <Text style={[styles.formSubtitle, { color: colors.textSecondary }]}>Sign in to access your schedule</Text>
+            </View>
+
+            {/* Error Message */}
+            {loginError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{loginError}</Text>
+              </View>
+            ) : null}
+
+            {/* Username Input */}
+            <Pressable 
+              style={[
+                styles.inputContainer,
+                isFocused.username && [styles.inputFocused, { borderColor: colors.primary, backgroundColor: colors.card }],
+                { backgroundColor: colors.card, borderColor: colors.border }
+              ]}
+              onPress={() => usernameRef.current?.focus()}
+            >
+              <TextInput 
+                ref={usernameRef}
+                placeholder='Username' 
+                style={[styles.textInput, { color: colors.text }]}
+                autoCapitalize='none'
+                autoCorrect={false}
+                onChangeText={setUsername}
+                value={username}
+                onFocus={() => handleFocus('username')}
+                onBlur={() => handleBlur('username')}
+                placeholderTextColor={colors.textSecondary}
+                blurOnSubmit={false}
+                returnKeyType="next"
+                onSubmitEditing={handleUsernameSubmit}
+              />
+            </Pressable>
+
+            {/* Password Input */}
+            <Pressable 
+              style={[
+                styles.inputContainer,
+                isFocused.password && [styles.inputFocused, { borderColor: colors.primary, backgroundColor: colors.card }],
+                { backgroundColor: colors.card, borderColor: colors.border }
+              ]}
+              onPress={() => passwordRef.current?.focus()}
+            >
+              <TextInput 
+                ref={passwordRef}
+                placeholder='Password' 
+                style={[styles.textInput, { color: colors.text }]}
+                secureTextEntry
+                autoCorrect={false}
+                onChangeText={setPassword}
+                value={password}
+                onFocus={() => handleFocus('password')}
+                onBlur={() => handleBlur('password')}
+                placeholderTextColor={colors.textSecondary}
+                blurOnSubmit={false}
+                returnKeyType="done"
+                onSubmitEditing={handlePasswordSubmit}
+                selectTextOnFocus={true}
+              />
+            </Pressable>
+
+            {/* Forgot Password */}
+            <View style={styles.forgotContainer}>
+              <Link href={'/resetPass'} style={[styles.forgotLink, { color: colors.primary }]}>
+                Forgot your password?
+              </Link>
+            </View>
+
+            {/* Login Button */}
+            <Pressable 
+              onPress={loginSubmit}
+              disabled={isLoading}
+              style={({pressed}) => [
+                styles.loginButton,
+                pressed && styles.loginButtonPressed,
+                isLoading && styles.loginButtonDisabled
+              ]}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <Text style={styles.loginButtonText}>Sign In</Text>
+              )}
+            </Pressable>
+          </Animated.View>
+
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}> 2025 OptiSched. All rights reserved.</Text>
+            <Text style={[styles.versionText, { color: colors.textSecondary }]}>Version 1.0.0</Text>
           </View>
-
-          <Pressable onPress={loginSubmit}
-          style={({pressed}) => [styles.loginButton, pressed && styles.pressedLoginButton]}>
-            <Text style={styles.loginButtonText}>Continue</Text>
-          </Pressable>
-
-          <Link 
-          href="/about" style={styles.aboutText}>About OptiSched</Link>
-      </View>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}> 2025 OptiSched. All rights reserved.</Text>
-      </View>
-    </ThemedView>
-    </TouchableWithoutFeedback>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
   },
-  HeadContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.lightBlue,
-    width: '100%',
-    height: '40%',
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  innerContainer: {
+    flex: 1,
+    position: 'relative',
+    minHeight: height,
+  },
+  backgroundGradient: {
     position: 'absolute',
     top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  gradientCircle: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(73, 136, 196, 0.1)',
+  },
+  headerContainer: {
+    alignItems: 'center',
+    paddingTop: height * 0.15,
+    paddingHorizontal: 20,
+    zIndex: 1,
+  },
+  brandText: {
+    fontSize: 42,
+    fontWeight: '800',
+    color: Colors.darkBlue,
+    textAlign: 'center',
+    letterSpacing: -1,
+  },
+  brandHighlight: {
+    color: Colors.lightBlue,
+  },
+  tagline: {
+    fontSize: 16,
+    color: Colors.blue,
+    textAlign: 'center',
+    marginTop: 8,
+    fontWeight: '500',
+  },
+  formContainer: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
+    borderRadius: 24,
+    padding: 32,
     shadowColor: '#000',
     shadowOffset: {
-      width: 10,
-      height: 8,
+      width: 0,
+      height: 10,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowRadius: 20,
+    elevation: 10,
+    zIndex: 1,
+    marginTop: 40,
   },
-  HeadText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: Colors.white,
+  formHeader: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
-  HeadTextHighlight: {
-    color: Colors.lightestBlue,
-    shadowColor: Colors.darkBlue,
+  formTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: Colors.darkBlue,
+    marginBottom: 8,
+  },
+  formSubtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '400',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  inputFocused: {
+    borderColor: Colors.lightBlue,
+    backgroundColor: '#ffffff',
+    shadowColor: Colors.lightBlue,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 0,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    color: Colors.darkBlue,
+    paddingVertical: 16,
+    fontWeight: '500',
+  },
+  forgotContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotLink: {
+    fontSize: 14,
+    color: Colors.lightBlue,
+    fontWeight: '600',
+  },
+  errorContainer: {
+    backgroundColor: '#fee2e2',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  loginButton: {
+    backgroundColor: Colors.lightBlue,
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: Colors.lightBlue,
+    shadowOffset: {
+      width: 0,
+      height: 4,
     },
     shadowOpacity: 0.3,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  SubContainer: {
-    backgroundColor: Colors.white,
-    width: '80%',
-    height: '55%',
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    bottom: '15%',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.6)',
+  loginButtonPressed: {
+    backgroundColor: Colors.blue,
+    transform: [{ scale: 0.98 }],
   },
-  SubText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.blue,
-    position: 'absolute',
-    top: '5%',
-    justifyContent: 'center',
-    alignItems: 'center',
+  loginButtonDisabled: {
+    backgroundColor: '#9ca3af',
   },
-  aboutText: {
-    position: 'absolute',
-    top: '92%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    color: Colors.blue,
-    fontSize: 13,
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
+  loginButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   footer: {
     position: 'absolute',
     bottom: 0,
+    left: 0,
     right: 0,
-    width: '100%',
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: 10,
-    backgroundColor: Colors.lightBlue,
-    color: Colors.white,
-    fontSize: 12,
-    fontWeight: 'bold',
+    paddingVertical: 20,
+    zIndex: 1,
   },
   footerText: {
-    color: Colors.white,
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '400',
   },
-  loginButton: {
-    position: 'absolute',
-    bottom: '15%',
-    backgroundColor: Colors.lightBlue,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  versionText: {
+    fontSize: 10,
+    color: '#9ca3af',
+    marginTop: 4,
   },
-  loginButtonText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  pressedLoginButton: {
-    backgroundColor: Colors.darkBlue,
-    shadowColor: 'black',
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
-    elevation: 7,
-  },
- emailContainer: {
-      backgroundColor: Colors.lightBlue,
-        padding: 10,
-        width: '60%',
-        position: 'absolute',
-        top: '25%',
-        outlineColor: 'black',
-        outlineWidth: 2,
-        borderRadius: 10,
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.6)',
-  },
-  passContainer: {
-      backgroundColor: Colors.lightBlue,
-        padding: 10,
-        width: '60%',
-        position: 'absolute',
-        top: '50%',
-        outlineColor: 'black',
-        outlineWidth: 2,
-        borderRadius: 10,
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.6)',
-  }
 })
 
 export default LogIn
