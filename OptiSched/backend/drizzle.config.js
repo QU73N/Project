@@ -4,5 +4,5 @@ export default {
     schema: "./src/db/schema.js",
     out: "./src/db/migrations",
     dialect: "postgresql",
-    dbCredentials: { url: ENV.DB_URL }
+    dbCredentials: { url: ENV.DATABASE_URL }
 }
