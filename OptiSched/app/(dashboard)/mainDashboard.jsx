@@ -187,10 +187,10 @@ const mainDashboard = () => {
             <Image source={{ uri: user.profileImage }} style={styles.profilePicture} />
           ) : (
             <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-              <Text style={styles.avatarText}>{user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</Text>
+              <Text style={styles.avatarText}>{user.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}</Text>
             </View>
           )}
-          <Text style={[styles.userName, { color: colors.text }]}>{user.name}</Text>
+          <Text style={[styles.userName, { color: colors.text }]}>{user.name || 'User'}</Text>
         </View>
       </Animated.View>
 

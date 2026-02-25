@@ -72,7 +72,7 @@ const LogIn = () => {
   }
 
   const handleGoogleSignIn = async () => {
-    setLoginError('Google Sign-In temporarily disabled. Use mock account instead.')
+    setLoginError('Google Sign-In temporarily disabled. Please Sign-In instead.')
   }
 
   const handleFocus = (field) => {
