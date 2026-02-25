@@ -75,12 +75,6 @@ const LogIn = () => {
     setLoginError('Google Sign-In temporarily disabled. Use mock account instead.')
   }
 
-  const handleMockLogin = () => {
-    setUsername('testaccount123')
-    setPassword('123123')
-    enableFallback()
-  }
-
   const handleFocus = (field) => {
     setIsFocused(prev => ({ ...prev, [field]: true }))
   }
@@ -246,18 +240,12 @@ const LogIn = () => {
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </Pressable>
 
-            {/* Mock Login Button (for testing) */}
-            <Pressable 
-              onPress={handleMockLogin}
-              disabled={isLoading}
-              style={({pressed}) => [
-                styles.mockButton,
-                pressed && styles.mockButtonPressed,
-                isLoading && styles.mockButtonDisabled
-              ]}
-            >
-              <Text style={styles.mockButtonText}>Use Mock Account (testaccount123/123123)</Text>
-            </Pressable>
+            {/* Test Account Info */}
+            <View style={styles.testAccountInfo}>
+              <Text style={styles.testAccountText}>
+                Test Account: testaccount123 / 123123
+              </Text>
+            </View>
           </Animated.View>
 
           {/* Footer */}
@@ -465,6 +453,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  testAccountInfo: {
+    backgroundColor: '#f3f4f6',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+  },
+  testAccountText: {
+    color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   mockButton: {
     backgroundColor: '#6b7280',
