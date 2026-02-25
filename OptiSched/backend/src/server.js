@@ -5,6 +5,7 @@ import job from './config/cron.js'
 import authRoutes from './routes/auth.js'
 import subjectRoutes from './routes/subjects.js'
 import userRoutes from './routes/users.js'
+import debugRoutes from './routes/debug.js'
 
 export const app = express()
 
@@ -24,6 +25,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/subjects', subjectRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/debug', debugRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {
