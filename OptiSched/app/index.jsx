@@ -59,7 +59,7 @@ const LogIn = () => {
       const result = await contextLogin(username, password)
       
       if (result.success) {
-        router.replace('/(dashboard)')
+        router.replace('/(dashboard)/mainDashboard')
       } else {
         setLoginError(result.message || 'Login failed. Please check your credentials.')
       }
