@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native'
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native'
 import { useRouter } from 'expo-router'
 import React, { useContext, useState } from 'react'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { ThemeContext } from '../../contexts/ThemeContext'
 import { UserContext } from '../../contexts/UserContext'
+import authService from '../../services/authService'
 
 const ChangePassword = () => {
   const router = useRouter()
@@ -23,6 +24,9 @@ const ChangePassword = () => {
   }
 
   const handleChangePassword = async () => {
+    // Dismiss keyboard
+    Keyboard.dismiss()
+    
     if (!currentPassword || !newPassword || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields')
       return
@@ -41,15 +45,20 @@ const ChangePassword = () => {
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Use authService to change password (mock data)
+      const result = await authService.changePassword(currentPassword, newPassword, confirmPassword)
       
-      Alert.alert(
-        'Success',
-        'Your password has been changed successfully!',
-        [{ text: 'OK', onPress: () => router.back() }]
-      )
+      if (result.success) {
+        Alert.alert(
+          'Success',
+          'Your password has been changed successfully!',
+          [{ text: 'OK', onPress: () => router.back() }]
+        )
+      } else {
+        Alert.alert('Error', result.message || 'Failed to change password. Please try again.')
+      }
     } catch (error) {
+      console.error('Password change error:', error)
       Alert.alert('Error', 'Failed to change password. Please try again.')
     } finally {
       setIsLoading(false)
@@ -77,6 +86,9 @@ const ChangePassword = () => {
           secureTextEntry={secureTextEntry && !showPassword}
           autoCapitalize="none"
           autoCorrect={false}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => Keyboard.dismiss()}
         />
         <TouchableOpacity
           style={styles.eyeIcon}
@@ -93,17 +105,23 @@ const ChangePassword = () => {
   )
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <FontAwesome name="chevron-left" size={20} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Change Password</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <FontAwesome name="chevron-left" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Change Password</Text>
+          <View style={styles.placeholder} />
+        </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 100 }}
+        >
         {/* Security Notice */}
         <View style={styles.section}>
           <View style={[styles.noticeCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
@@ -218,7 +236,8 @@ const ChangePassword = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+      </View>
+    </TouchableWithoutFeedback>
   )
 }
 

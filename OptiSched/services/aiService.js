@@ -9,7 +9,7 @@ class AIService {
       gemini: process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'your-gemini-api-key',
     }
     this.currentProvider = process.env.EXPO_PUBLIC_AI_PROVIDER || 'gemini' // Default to Gemini
-    this.currentModel = process.env.EXPO_PUBLIC_AI_MODEL || 'gemini-1.5-flash'
+    this.currentModel = process.env.EXPO_PUBLIC_AI_MODEL || 'gemini-1.5-pro'
     this.retryCount = 0
     this.maxRetries = 3
     this.lastRequestTime = 0
