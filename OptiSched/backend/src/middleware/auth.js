@@ -2,8 +2,9 @@ import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
 import { db } from '../config/db.js';
 import { faculty, students } from '../db/schema.js';
+import { ENV } from '../config/env.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = ENV.JWT_SECRET;
 
 export const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -42,7 +43,7 @@ export const authenticateToken = async (req, res, next) => {
 };
 
 export const generateToken = (userId, role) => {
-  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '24h' });
+  return jwt.sign({ userId, role }, ENV.JWT_SECRET, { expiresIn: '24h' });
 };
 
 export const hashPassword = async (password) => {
