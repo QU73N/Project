@@ -1,124 +1,104 @@
-import { createContext, useState, useEffect } from "react";
-import authService from "../services/authService";
+import { createContext, useState, useEffect, useContext } from "react";
+import { ClerkProvider, useUser, useAuth } from "@clerk/clerk-expo";
+import { authService } from "../services/authService";
 
 export const UserContext = createContext()
 
-export function UserProvider({ children })
-{
-    const[user, setUser] = useState({
-        name: "Morgado, Ace A.",
-        id: "02000399541",
-        dateOfBirth: "June 8, 2008",
-        address: "MGL Village, Viente Reales, Valenzuela City",
-        strand: "Mobile App & Web Development",
-        section: "12 A",
-        profileImage: null,
-        email: "morgado@school.edu",
-        phoneNumber: "+63 912 345 6789",
-        emergencyContact: "Maria Morgado (Mother) +63 913 456 7890",
-        gradeLevel: 12,
-        department: "Science and Technology",
-        enrollmentDate: "2022-06-15",
-        gpa: "89.5",
-        subjects: [
-            "Physical Education and Health 4",
-            "Computer/Web Programming 6",
-            "Mobile App Programming 2",
-            "Contemporary Arts from the regions",
-            "Homeroom",
-            "Work Immersion-Practicum Type",
-            "Inquiries Investigation and Immersion",
-            "Empowerment Technologies: ICT",
-            "Entrepreneurship"
-        ],
-        role: "student",
-        permissions: {
-            can_view_schedule: true,
-            can_edit_schedule: false,
-            can_view_profile: true,
-            can_edit_profile: true,
-            can_manage_users: false,
-            can_manage_events: false,
-            can_manage_system: false
-        }
-    })
+export function UserProvider({ children }) {
+    const { isSignedIn, user, isLoaded } = useUser();
+    const { getToken } = useAuth();
+    
+    const [isLoading, setIsLoading] = useState(true);
+    const [localUser, setLocalUser] = useState(null);
 
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
-    const [isLoading, setIsLoading] = useState(true)
-
+    // Sync Clerk user with local context
     useEffect(() => {
-        const initializeAuth = async () => {
-            try {
-                await authService.initialize()
-                if (authService.isLoggedIn()) {
-                    const userProfile = authService.getUserProfile()
-                    setUser(userProfile)
-                    setIsAuthenticated(true)
+        if (isLoaded && user) {
+            setLocalUser({
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.primaryEmailAddress?.emailAddress,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                profileImage: user.imageUrl,
+                role: 'student', // Default role, can be updated based on metadata
+                permissions: {
+                    can_view_schedule: true,
+                    can_edit_schedule: false,
+                    can_view_profile: true,
+                    can_edit_profile: true,
+                    can_manage_users: false,
+                    can_manage_events: false,
+                    can_manage_system: false
                 }
-            } catch (error) {
-                console.error('Auth initialization error:', error)
-            } finally {
-                setIsLoading(false)
-            }
+            });
+            setIsLoading(false);
+        } else if (isLoaded && !user) {
+            setLocalUser(null);
+            setIsLoading(false);
         }
-
-        initializeAuth()
-    }, [])
+    }, [isLoaded, user]);
 
     const updateUserProfile = async (profileData) => {
         try {
-            const result = await authService.updateProfile(profileData)
-            if (result.success) {
-                const updatedProfile = authService.getUserProfile()
-                setUser(updatedProfile)
-            }
-            return result
+            // TODO: Update user profile via Clerk API
+            console.log('Updating profile:', profileData);
+            
+            // Update local state
+            setLocalUser(prev => ({
+                ...prev,
+                ...profileData
+            }));
+            
+            return { success: true, message: 'Profile updated successfully' };
         } catch (error) {
-            console.error('Profile update error:', error)
-            return { success: false, message: 'Failed to update profile' }
+            console.error('Profile update error:', error);
+            return { success: false, message: 'Failed to update profile' };
         }
-    }
+    };
 
-    const login = async (username, password) => {
-        try {
-            const result = await authService.login(username, password)
-            if (result.success) {
-                const userProfile = authService.getUserProfile()
-                setUser(userProfile)
-                setIsAuthenticated(true)
-            }
-            return result
-        } catch (error) {
-            console.error('Login error:', error)
-            return { success: false, message: 'Login failed' }
-        }
-    }
+    const login = async (email, password) => {
+        // Clerk handles login through their components
+        // This is just a placeholder for compatibility
+        return { success: false, message: 'Use Clerk SignIn component instead' };
+    };
 
     const logout = async () => {
         try {
-            const result = await authService.logout()
-            if (result.success) {
-                setUser(null)
-                setIsAuthenticated(false)
-            }
-            return result
+            // Clerk handles sign out
+            await Clerk.signOut();
+            setLocalUser(null);
+            return { success: true, message: 'Logged out successfully' };
         } catch (error) {
-            console.error('Logout error:', error)
-            return { success: false, message: 'Logout failed' }
+            console.error('Logout error:', error);
+            return { success: false, message: 'Logout failed' };
         }
-    }
+    };
 
     return (
-        <UserContext.Provider value={{ 
-            user, 
-            isAuthenticated, 
-            isLoading,
-            updateUserProfile, 
-            login,
-            logout,
-            authService
-        }}>
-            {children}
-        </UserContext.Provider>
-    )
+        <ClerkProvider>
+            <UserContext.Provider value={{
+                user: localUser,
+                isAuthenticated: isSignedIn,
+                isLoading,
+                updateUserProfile,
+                login,
+                logout,
+                authService, // Keep for backward compatibility
+                clerkUser: user,
+                isSignedIn,
+                getToken
+            }}>
+                {children}
+            </UserContext.Provider>
+        </ClerkProvider>
+    );
+}
+
+export function useUserContext() {
+    const context = useContext(UserContext);
+    if (!context) {
+        throw new Error('useUserContext must be used within a UserProvider');
+    }
+    return context;
 }

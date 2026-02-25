@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js'
 import subjectRoutes from './routes/subjects.js'
 import userRoutes from './routes/users.js'
 import debugRoutes from './routes/debug.js'
+import clerkRoutes from './routes/clerk.js'
 
 export const app = express()
 
@@ -26,6 +27,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/subjects', subjectRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/debug', debugRoutes)
+app.use('/api/clerk', clerkRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {

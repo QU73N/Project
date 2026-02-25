@@ -6,12 +6,14 @@ import { useNavigation } from '@react-navigation/native'
 import { useState, useRef, useEffect, useContext } from 'react'
 import { useUser } from '../hooks/useUser'
 import { ThemeContext } from '../contexts/ThemeContext'
-import authService from '../services/authService'
+import { useSignIn, useOAuth } from '@clerk/clerk-expo'
+import { useRouter } from 'expo-router'
 
 const { width, height } = Dimensions.get('window')
 
 const LogIn = () => {
   const navigation = useNavigation()
+  const router = useRouter()
   const { colors } = useContext(ThemeContext)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -22,6 +24,9 @@ const LogIn = () => {
   const slideAnim = useRef(new Animated.Value(50)).current
   const passwordRef = useRef(null)
   const usernameRef = useRef(null)
+
+  const { isLoaded, signIn, setActive } = useSignIn()
+  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' })
 
   const { user } = useUser()
 
@@ -46,25 +51,40 @@ const LogIn = () => {
       return
     }
 
+    if (!isLoaded) return
+
     setIsLoading(true)
     setLoginError('')
 
     try {
-      const result = await authService.login(username, password)
-      
-      if (result.success) {
-        console.log('Login successful:', result.user)
-        // Navigate based on user role
-        const dashboardRoute = authService.getDashboardRoute()
-        navigation.navigate(dashboardRoute.split('/')[1]) // Remove the leading '/'
+      const result = await signIn.create({
+        identifier: username,
+        password,
+      })
+
+      if (result.status === 'complete') {
+        await setActive({ session: result.createdSessionId })
+        router.replace('/(dashboard)')
       } else {
-        setLoginError(result.message || 'Login failed')
+        setLoginError('Login failed. Please check your credentials.')
       }
-    } catch (error) {
-      console.error('Login error:', error)
-      setLoginError('An unexpected error occurred. Please try again.')
+    } catch (err) {
+      console.error('Login error:', err)
+      setLoginError(err.errors?.[0]?.message || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await startOAuthFlow()
+      if (result.status === 'complete') {
+        router.replace('/(dashboard)')
+      }
+    } catch (err) {
+      console.error('Google sign in error:', err)
+      setLoginError('Google sign in failed')
     }
   }
 
@@ -218,6 +238,19 @@ const LogIn = () => {
               ) : (
                 <Text style={styles.loginButtonText}>Sign In</Text>
               )}
+            </Pressable>
+
+            {/* Google Sign-In Button */}
+            <Pressable 
+              onPress={handleGoogleSignIn}
+              disabled={isLoading}
+              style={({pressed}) => [
+                styles.googleButton,
+                pressed && styles.googleButtonPressed,
+                isLoading && styles.googleButtonDisabled
+              ]}
+            >
+              <Text style={styles.googleButtonText}>Continue with Google</Text>
             </Pressable>
           </Animated.View>
 
@@ -394,6 +427,34 @@ const styles = StyleSheet.create({
     backgroundColor: '#9ca3af',
   },
   loginButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  googleButton: {
+    backgroundColor: '#4285f4',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#4285f4',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  googleButtonPressed: {
+    backgroundColor: '#3367d6',
+    transform: [{ scale: 0.98 }],
+  },
+  googleButtonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  googleButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '700',
