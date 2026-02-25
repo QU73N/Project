@@ -6,11 +6,21 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Entypo from '@expo/vector-icons/Entypo';
 import { useContext } from 'react'
 import { ThemeContext } from '../../contexts/ThemeContext'
+import { UserContext } from '../../contexts/UserContext'
+import { useRouter } from 'expo-router'
 
 const dashboardLayout = () => {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
     const { colors, isDarkMode } = useContext(ThemeContext)
+    const { user } = useContext(UserContext)
+    const router = useRouter()
+
+    if (!user) {
+      router.push('login')
+      return null
+    }
+
   return (
     <Tabs
     screenOptions={{ headerShown: false, tabBarStyle: {
