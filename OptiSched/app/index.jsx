@@ -221,7 +221,7 @@ const LogIn = () => {
               ]}
             >
               {isLoading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#ffffff" style={{alignSelf: 'center'}} />
               ) : (
                 <Text style={styles.loginButtonText}>Sign In</Text>
               )}
@@ -239,13 +239,6 @@ const LogIn = () => {
             >
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </Pressable>
-
-            {/* Test Account Info */}
-            <View style={styles.testAccountInfo}>
-              <Text style={styles.testAccountText}>
-                Test Account: testaccount123 / 123123
-              </Text>
-            </View>
           </Animated.View>
 
           {/* Footer */}

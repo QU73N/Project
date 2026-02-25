@@ -128,7 +128,7 @@ export function MockAuthProvider({ children }) {
 }
 
 export function useMockAuth() {
-  const context = MockAuthContext;
+  const context = useContext(MockAuthContext);
   if (!context) {
     throw new Error('useMockAuth must be used within a MockAuthProvider');
   }
